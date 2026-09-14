@@ -22,7 +22,7 @@ class HomeService
                 'title' => 'Dictation Lab — Chép chính tả song ngữ đa chủ đề',
                 'description' => 'Học tiếng Anh qua chép chính tả song ngữ Anh-Việt: báo chí, truyện ngắn, TED Talks. Tăng phản xạ qua muscle memory, sổ từ vựng cá nhân.',
             ],
-            'demo_video_url' => app(SettingService::class)->getDemoVideoUrl(),
+            'demo_video_url' => rescue(fn (): ?string => app(SettingService::class)->getDemoVideoUrl(), null, false),
             'hero' => [
                 'badge' => 'Bilingual Dictation',
                 'title_lines' => ['Chép chính tả song ngữ,', 'tăng phản xạ tiếng Anh', 'qua muscle memory.'],

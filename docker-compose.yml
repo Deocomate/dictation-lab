@@ -27,10 +27,10 @@ services:
     image: mariadb:11
     restart: unless-stopped
     environment:
-      MARIADB_DATABASE: ${DB_DATABASE}
-      MARIADB_USER: ${DB_USERNAME}
-      MARIADB_PASSWORD: ${DB_PASSWORD}
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE:-db_dictationlab}
+      MARIADB_USER: ${DB_USERNAME:-dictation_user}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-secret123}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-rootsecret123}
     volumes:
       - mariadb_data:/var/lib/mysql
     # Internal only — reachable by `app` over the compose network, never
