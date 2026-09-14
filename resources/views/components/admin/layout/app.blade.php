@@ -64,7 +64,7 @@
 		{{-- Main content --}}
 		<div class="flex-1 flex flex-col min-w-0">
 			{{-- Header --}}
-			<header class="sticky top-0 z-30 bg-white border-b border-border-light px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+			<header class="sticky top-0 z-30 bg-white border-b border-border-light px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 				<div class="flex items-center gap-3">
 					{{-- Mobile menu toggle --}}
 					<button @click="sidebarOpen = !sidebarOpen" class="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 text-text-secondary cursor-pointer">

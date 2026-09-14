@@ -10,7 +10,7 @@ class FormatHelper
     {
         $value = (float) ($amount ?? 0);
 
-        return number_format($value, 0, ',', '.') . 'đ';
+        return number_format($value, 0, ',', '.').'đ';
     }
 
     public static function dateTime($dateTime, string $format = 'd/m/Y H:i'): string

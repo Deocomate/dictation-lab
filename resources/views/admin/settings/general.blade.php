@@ -10,18 +10,17 @@
 				@csrf
 				@method('PUT')
 
-				<div>
-					<label for="demo_video_url" class="block text-sm font-semibold text-text-primary mb-1.5">URL YouTube demo</label>
-					<input
-						id="demo_video_url"
+				<x-admin.form.field label="URL YouTube demo" for="demo_video_url" hint="Hỗ trợ watch, youtu.be, embed, shorts">
+					<x-admin.form.input
 						type="url"
+						id="demo_video_url"
 						name="demo_video_url"
-						value="{{ old('demo_video_url', $demoVideoUrl) }}"
-						class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm"
+						:value="old('demo_video_url', $demoVideoUrl)"
 						placeholder="https://www.youtube.com/watch?v=..."
+						icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>'
 					/>
-					<p class="text-xs text-text-secondary mt-1">Để trống nếu chưa muốn hiển thị popup video trên trang chủ.</p>
-				</div>
+					<p class="text-xs text-text-secondary mt-1">Để trống nếu chưa muốn hiển thị video popup trên trang chủ.</p>
+				</x-admin.form.field>
 
 				@if($demoVideoUrl)
 					<div class="rounded-xl border border-border-light overflow-hidden bg-black">

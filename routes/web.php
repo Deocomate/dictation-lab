@@ -124,6 +124,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('clients/{client}/status', [ClientController::class, 'updateStatus'])->name('clients.update-status');
             Route::put('clients/{client}/subscription', [ClientController::class, 'updateSubscription'])->name('clients.update-subscription');
 
+            Route::post('categories/quick-store', [CategoryController::class, 'quickStore'])->name('categories.quick-store');
             Route::resource('categories', CategoryController::class)->except(['show']);
             Route::resource('articles', ArticleController::class)->except(['show']);
 

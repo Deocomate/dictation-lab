@@ -5,6 +5,8 @@ use App\Models\Category;
 use App\Models\User;
 use App\Services\ArticleContentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -105,4 +107,92 @@ test('client library filters articles by category slug', function () {
     $response->assertOk();
     $response->assertSee('Business Article');
     $response->assertDontSee('Travel Article');
+});
+
+test('admin can upload article cover image and image url is generated properly', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create([
+        'role' => 'admin',
+        'status' => 'active',
+    ]);
+
+    $cat = Category::query()->create(['name' => 'Tech', 'slug' => 'tech', 'status' => 'active']);
+
+    $image = UploadedFile::fake()->image('cover.jpg', 600, 400);
+
+    $response = $this->actingAs($admin)->post(route('admin.articles.store'), [
+        'title' => 'Article With Image',
+        'category_ids' => [$cat->id],
+        'status' => 'published',
+        'is_premium' => 0,
+        'image' => $image,
+        'content' => [
+            ['type' => 'sentence', 'en' => 'Test sentence.', 'vi' => 'Câu kiểm tra.'],
+        ],
+    ]);
+
+    $response->assertRedirect(route('admin.articles.index'));
+
+    $article = Article::where('title', 'Article With Image')->first();
+    expect($article)->not->toBeNull()
+        ->and($article->image_path)->not->toBeNull();
+
+    Storage::disk('public')->assertExists($article->image_path);
+
+    expect($article->imageUrl())->toBe('/storage/'.$article->image_path);
+
+    $indexResponse = $this->actingAs($admin)->get(route('admin.articles.index'));
+    $indexResponse->assertOk()
+        ->assertSee($article->imageUrl(), false);
+
+    $editResponse = $this->actingAs($admin)->get(route('admin.articles.edit', $article));
+    $editResponse->assertOk()
+        ->assertSee($article->imageUrl(), false);
+});
+
+test('admin can remove existing article cover image', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create([
+        'role' => 'admin',
+        'status' => 'active',
+    ]);
+
+    $cat = Category::query()->create(['name' => 'Tech', 'slug' => 'tech', 'status' => 'active']);
+
+    $image = UploadedFile::fake()->image('initial.jpg', 600, 400);
+    $path = Storage::disk('public')->putFile('articles', $image);
+
+    $article = Article::query()->create([
+        'title' => 'Article To Remove Image',
+        'image_path' => $path,
+        'status' => 'published',
+        'is_premium' => false,
+        'content_json' => [
+            ['type' => 'sentence', 'en' => 'Sentence.', 'vi' => 'Câu.'],
+        ],
+    ]);
+    $article->categories()->attach($cat->id);
+
+    Storage::disk('public')->assertExists($path);
+
+    $response = $this->actingAs($admin)->put(route('admin.articles.update', $article), [
+        'title' => 'Article To Remove Image Updated',
+        'category_ids' => [$cat->id],
+        'status' => 'published',
+        'is_premium' => 0,
+        'remove_image' => '1',
+        'content' => [
+            ['type' => 'sentence', 'en' => 'Sentence.', 'vi' => 'Câu.'],
+        ],
+    ]);
+
+    $response->assertRedirect(route('admin.articles.index'));
+
+    $article->refresh();
+    expect($article->image_path)->toBeNull()
+        ->and($article->imageUrl())->toBeNull();
+
+    Storage::disk('public')->assertMissing($path);
 });

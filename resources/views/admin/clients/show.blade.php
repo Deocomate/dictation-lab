@@ -68,11 +68,17 @@
                         <input type="hidden" name="per_page" value="{{ $perPage }}" />
                         <input type="hidden" name="page" value="{{ $attempts->currentPage() }}" />
 
-                        <select name="status" class="input-admin border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all">
-                            <option value="active" @selected($client->status === 'active')>Active</option>
-                            <option value="locked" @selected($client->status === 'locked')>Locked</option>
-                        </select>
-                        <button type="submit" class="inline-flex items-center gap-1.5 bg-brand text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
+                        <div class="w-40">
+                            <x-admin.form.select
+                                name="status"
+                                :value="$client->status"
+                                :options="[
+                                    ['value' => 'active', 'label' => 'Active', 'dot' => 'bg-emerald-500'],
+                                    ['value' => 'locked', 'label' => 'Locked', 'dot' => 'bg-red-500'],
+                                ]"
+                            />
+                        </div>
+                        <button type="submit" class="inline-flex items-center gap-1.5 bg-brand text-white rounded-xl px-4 py-2.5 text-sm font-semibold hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             Cập nhật trạng thái
                         </button>
@@ -88,19 +94,27 @@
                     <input type="hidden" name="per_page" value="{{ $perPage }}" />
                     <input type="hidden" name="page" value="{{ $attempts->currentPage() }}" />
 
+                    <x-admin.form.field label="Subscription Tier" for="subscription_tier">
+                        <x-admin.form.select
+                            id="subscription_tier"
+                            name="subscription_tier"
+                            :value="old('subscription_tier', $client->subscription_tier)"
+                            :options="[
+                                ['value' => 'free', 'label' => 'Free — Miễn phí', 'badge' => 'Free'],
+                                ['value' => 'pro', 'label' => 'Pro — Trả phí', 'badge' => 'Pro'],
+                            ]"
+                        />
+                    </x-admin.form.field>
+                    <x-admin.form.field label="Subscription Expires At" for="subscription_expires_at">
+                        <x-admin.form.input
+                            type="date"
+                            id="subscription_expires_at"
+                            name="subscription_expires_at"
+                            :value="old('subscription_expires_at', optional($client->subscription_expires_at)->format('Y-m-d'))"
+                        />
+                    </x-admin.form.field>
                     <div>
-                        <label class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Subscription Tier</label>
-                        <select name="subscription_tier" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all">
-                            <option value="free" @selected(old('subscription_tier', $client->subscription_tier) === 'free')>Free</option>
-                            <option value="pro" @selected(old('subscription_tier', $client->subscription_tier) === 'pro')>Pro</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Subscription Expires At</label>
-                        <input type="date" name="subscription_expires_at" value="{{ old('subscription_expires_at', optional($client->subscription_expires_at)->format('Y-m-d')) }}" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all" />
-                    </div>
-                    <div>
-                        <button type="submit" class="w-full inline-flex items-center justify-center gap-1.5 bg-brand text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
+                        <button type="submit" class="w-full inline-flex items-center justify-center gap-1.5 bg-brand text-white rounded-xl px-4 py-2.5 text-sm font-semibold hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             Lưu gói cước
                         </button>
@@ -112,31 +126,39 @@
         {{-- Period filter --}}
         <div class="bg-white border border-border-light rounded-xl p-4 sm:p-5 mb-6 shadow-card">
             <form method="GET" action="{{ route('admin.clients.show', $client) }}" class="grid md:grid-cols-3 gap-3 items-end">
-                <div>
-                    <label class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Khung thời gian</label>
-                    <select name="period_days" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all">
-                        <option value="7" @selected($periodDays == 7)>7 ngày</option>
-                        <option value="30" @selected($periodDays == 30)>30 ngày</option>
-                        <option value="90" @selected($periodDays == 90)>90 ngày</option>
-                        <option value="180" @selected($periodDays == 180)>180 ngày</option>
-                        <option value="365" @selected($periodDays == 365)>365 ngày</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Số dòng mỗi trang</label>
-                    <select name="per_page" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all">
-                        <option value="10" @selected($perPage == 10)>10</option>
-                        <option value="15" @selected($perPage == 15)>15</option>
-                        <option value="20" @selected($perPage == 20)>20</option>
-                        <option value="50" @selected($perPage == 50)>50</option>
-                    </select>
-                </div>
+                <x-admin.form.field label="Khung thời gian" for="period_days">
+                    <x-admin.form.select
+                        id="period_days"
+                        name="period_days"
+                        :value="(string) $periodDays"
+                        :options="[
+                            ['value' => '7', 'label' => '7 ngày gần đây'],
+                            ['value' => '30', 'label' => '30 ngày gần đây'],
+                            ['value' => '90', 'label' => '90 ngày gần đây'],
+                            ['value' => '180', 'label' => '180 ngày gần đây'],
+                            ['value' => '365', 'label' => '365 ngày gần đây'],
+                        ]"
+                    />
+                </x-admin.form.field>
+                <x-admin.form.field label="Số dòng mỗi trang" for="per_page">
+                    <x-admin.form.select
+                        id="per_page"
+                        name="per_page"
+                        :value="(string) $perPage"
+                        :options="[
+                            ['value' => '10', 'label' => '10 dòng / trang'],
+                            ['value' => '15', 'label' => '15 dòng / trang'],
+                            ['value' => '20', 'label' => '20 dòng / trang'],
+                            ['value' => '50', 'label' => '50 dòng / trang'],
+                        ]"
+                    />
+                </x-admin.form.field>
                 <div class="flex gap-2">
-                    <button type="submit" class="inline-flex items-center justify-center gap-1.5 bg-brand text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-brand-dark transition-colors cursor-pointer shadow-sm w-full">
+                    <button type="submit" class="inline-flex items-center justify-center gap-1.5 bg-brand text-white rounded-xl px-4 py-2.5 text-sm font-semibold hover:bg-brand-dark transition-colors cursor-pointer shadow-sm w-full">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707L14 14v6l-4-2v-4L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
                         Lọc dữ liệu
                     </button>
-                    <a href="{{ route('admin.clients.show', $client) }}" class="inline-flex items-center justify-center border border-border-light text-text-secondary rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer">Reset</a>
+                    <a href="{{ route('admin.clients.show', $client) }}" class="inline-flex items-center justify-center border border-border-light text-text-secondary rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors cursor-pointer">Reset</a>
                 </div>
             </form>
         </div>

@@ -12,25 +12,19 @@
         </legend>
 
         {{-- Name --}}
-        <div>
-            <label for="name" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Tên danh mục <span class="text-red-500">*</span></label>
-            <input id="name" name="name" value="{{ old('name', $category?->name) }}" placeholder="VD: Khoa học, Công nghệ, Văn hóa..." class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all" required />
-            @error('name')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-        </div>
+        <x-admin.form.field label="Tên danh mục" for="name" required :error="$errors->first('name')">
+            <x-admin.form.input id="name" name="name" :value="old('name', $category?->name)" placeholder="VD: Khoa học, Công nghệ, Văn hóa..." required />
+        </x-admin.form.field>
 
         {{-- Slug --}}
-        <div>
-            <label for="slug" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Slug <span class="font-normal text-text-disabled">(tùy chọn — tự tạo nếu để trống)</span></label>
-            <input id="slug" name="slug" value="{{ old('slug', $category?->slug) }}" placeholder="vd: khoa-hoc" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all font-mono" />
-            @error('slug')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-        </div>
+        <x-admin.form.field label="Slug" for="slug" hint="(tùy chọn — tự động tạo nếu để trống)" :error="$errors->first('slug')">
+            <x-admin.form.input id="slug" name="slug" :value="old('slug', $category?->slug)" placeholder="vd: khoa-hoc" class="font-mono text-xs" />
+        </x-admin.form.field>
 
         {{-- Description --}}
-        <div>
-            <label for="description" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Mô tả <span class="font-normal text-text-disabled">(tùy chọn)</span></label>
-            <textarea id="description" name="description" rows="3" placeholder="Mô tả ngắn về danh mục này..." class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all leading-relaxed">{{ old('description', $category?->description) }}</textarea>
-            @error('description')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-        </div>
+        <x-admin.form.field label="Mô tả" for="description" hint="(tùy chọn)" :error="$errors->first('description')">
+            <x-admin.form.textarea id="description" name="description" :value="old('description', $category?->description)" rows="3" placeholder="Mô tả ngắn về danh mục này..." />
+        </x-admin.form.field>
     </fieldset>
 
     <hr class="border-border-light" />
@@ -42,14 +36,18 @@
             Phát hành
         </legend>
 
-        <div>
-            <label for="status" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Trạng thái</label>
-            <select id="status" name="status" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm cursor-pointer transition-all" required>
-                <option value="active" @selected(old('status', $category?->status ?? 'active') === 'active')>Active — Hiển thị</option>
-                <option value="inactive" @selected(old('status', $category?->status) === 'inactive')>Inactive — Ẩn</option>
-            </select>
-            @error('status')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-        </div>
+        <x-admin.form.field label="Trạng thái hiển thị" for="status" required :error="$errors->first('status')">
+            <x-admin.form.select
+                id="status"
+                name="status"
+                :value="old('status', $category?->status ?? 'active')"
+                :options="[
+                    ['value' => 'active', 'label' => 'Active — Hiển thị trên hệ thống', 'dot' => 'bg-emerald-500'],
+                    ['value' => 'inactive', 'label' => 'Inactive — Tạm ẩn danh mục', 'dot' => 'bg-gray-400'],
+                ]"
+                required
+            />
+        </x-admin.form.field>
     </fieldset>
 
     {{-- Actions --}}

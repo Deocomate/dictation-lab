@@ -1,28 +1,67 @@
 <x-admin.layout.app title="Quản lý bài viết" active="articles">
     {{-- Page header --}}
     <div class="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <form method="GET" class="flex flex-wrap items-center gap-2">
-            <div class="relative">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Tìm bài viết..." class="input-admin pl-9 pr-3 py-2 text-sm border border-border-light rounded-lg w-52 transition-all" />
+        @php
+            $categoryOptions = collect([['value' => '', 'label' => 'Tất cả danh mục']])
+                ->merge($categories->map(fn($c) => ['value' => (string) $c->id, 'label' => $c->name]))
+                ->all();
+            $accessOptions = [
+                ['value' => '', 'label' => 'Tất cả loại bài'],
+                ['value' => 'free', 'label' => 'Free — Miễn phí', 'badge' => 'Free'],
+                ['value' => 'pro', 'label' => 'Pro — Trả phí', 'badge' => 'Pro'],
+            ];
+            $statusOptions = [
+                ['value' => '', 'label' => 'Tất cả trạng thái'],
+                ['value' => 'draft', 'label' => 'Draft — Bản nháp', 'dot' => 'bg-amber-500'],
+                ['value' => 'published', 'label' => 'Published — Đã xuất bản', 'dot' => 'bg-emerald-500'],
+            ];
+        @endphp
+
+        <form method="GET" class="flex flex-wrap items-center gap-2.5">
+            <div class="w-56">
+                <x-admin.form.input
+                    name="search"
+                    :value="$filters['search'] ?? ''"
+                    placeholder="Tìm bài viết..."
+                    icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>'
+                />
             </div>
-            <select name="category_id" class="input-admin border border-border-light rounded-lg px-3 py-2 text-sm cursor-pointer" onchange="this.form.submit()">
-                <option value="">Tất cả danh mục</option>
-                @foreach($categories as $cat)
-                    <option value="{{ $cat->id }}" @selected(($filters['category_id'] ?? '') == $cat->id)>{{ $cat->name }}</option>
-                @endforeach
-            </select>
-            <select name="access" class="input-admin border border-border-light rounded-lg px-3 py-2 text-sm cursor-pointer" onchange="this.form.submit()">
-                <option value="">Free / Pro</option>
-                <option value="free" @selected(($filters['access'] ?? '') === 'free')>Free</option>
-                <option value="pro" @selected(($filters['access'] ?? '') === 'pro')>Pro</option>
-            </select>
-            <select name="status" class="input-admin border border-border-light rounded-lg px-3 py-2 text-sm cursor-pointer" onchange="this.form.submit()">
-                <option value="">Tất cả trạng thái</option>
-                <option value="draft" @selected(($filters['status'] ?? '') === 'draft')>Draft</option>
-                <option value="published" @selected(($filters['status'] ?? '') === 'published')>Published</option>
-            </select>
-            <button type="submit" class="px-3 py-2 text-sm bg-gray-100 text-text-primary rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">Lọc</button>
+
+            <div class="w-48">
+                <x-admin.form.select
+                    name="category_id"
+                    :value="$filters['category_id'] ?? ''"
+                    :options="$categoryOptions"
+                    placeholder="Tất cả danh mục"
+                    :searchable="true"
+                    :auto-submit="true"
+                />
+            </div>
+
+            <div class="w-40">
+                <x-admin.form.select
+                    name="access"
+                    :value="$filters['access'] ?? ''"
+                    :options="$accessOptions"
+                    placeholder="Loại truy cập"
+                    :auto-submit="true"
+                />
+            </div>
+
+            <div class="w-44">
+                <x-admin.form.select
+                    name="status"
+                    :value="$filters['status'] ?? ''"
+                    :options="$statusOptions"
+                    placeholder="Tất cả trạng thái"
+                    :auto-submit="true"
+                />
+            </div>
+
+            <button type="submit" class="px-3.5 py-2.5 text-sm font-medium bg-gray-100 hover:bg-gray-200 text-text-primary rounded-xl transition-colors cursor-pointer shadow-2xs">Lọc</button>
+            @if(!empty($filters['search']) || !empty($filters['category_id']) || !empty($filters['access']) || !empty($filters['status']))
+                <a href="{{ route('admin.articles.index') }}" class="px-3 py-2.5 text-xs text-text-secondary hover:text-red-600 transition-colors">Xóa lọc</a>
+            @endif
         </form>
         <a href="{{ route('admin.articles.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
@@ -49,7 +88,7 @@
                             <td class="px-5 py-3.5">
                                 <div class="flex items-center gap-3">
                                     @if($article->image_path)
-                                        <img src="{{ Storage::disk('public')->url($article->image_path) }}" class="w-12 h-10 object-cover rounded border border-border-light shrink-0" alt="Thumbnail">
+                                        <img src="{{ $article->imageUrl() }}" class="w-12 h-10 object-cover rounded border border-border-light shrink-0" alt="Thumbnail">
                                     @else
                                         <div class="w-12 h-10 bg-gray-100 rounded border border-dashed border-gray-300 flex items-center justify-center shrink-0">
                                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"/></svg>

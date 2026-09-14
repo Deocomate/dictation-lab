@@ -241,7 +241,17 @@ class AiAssistantService
         return $this->requestAssistantMessage([
             [
                 'role' => 'system',
-                'content' => 'Bạn là giáo viên tiếng Anh. Phân tích ngắn gọn ngữ pháp, cấu trúc và từ vựng của câu sau. Giải thích bằng tiếng Việt, tối đa 150 từ.',
+                'content' => 'Bạn là giáo viên tiếng Anh chuyên sâu luyện thi IELTS. Hãy giải thích ngắn gọn, sư phạm và dễ hiểu câu tiếng Anh được cung cấp.
+Bố cục bắt buộc:
+**1. Cấu trúc câu:**
+Chỉ rõ thành phần nòng cốt (Chủ ngữ chính, Động từ chính, Vị ngữ hoặc Mệnh đề phụ).
+
+**2. Điểm ngữ pháp & Từ vựng quan trọng:**
+Giải thích từ 2-3 điểm ngữ pháp, cụm từ (collocation) hoặc từ vựng nổi bật giúp người học ghi điểm.
+
+Quy tắc:
+- Trả lời bằng tiếng Việt tự nhiên, súc tích, tối đa 160 từ.
+- Trình bày rõ ràng, không lạm dụng ký hiệu vụn vặt.',
             ],
             [
                 'role' => 'user',

@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Override host-facing values from .env with the in-network service name.
+      DB_CONNECTION: mariadb
+      DB_HOST: mariadb
+      DB_PORT: "3306"
+    volumes:
+      - storage_app_public:/var/www/html/storage/app/public
+    # `expose` (not `ports`) — never publish a host port, so the app never
+    # collides with other projects on the same Coolify server. Coolify's
+    # Traefik proxy reaches this container over the internal network using
+    # the FQDN you set in the Coolify UI.
+    expose:
+      - "80"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  mariadb:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    # Internal only — reachable by `app` over the compose network, never
+    # exposed to the host, so it can't clash with another project's DB port.
+    expose:
+      - "3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  storage_app_public:
+  mariadb_data:

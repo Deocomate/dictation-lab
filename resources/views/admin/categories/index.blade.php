@@ -1,17 +1,32 @@
 <x-admin.layout.app title="Quản lý danh mục" active="categories">
     {{-- Page header --}}
     <div class="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <form method="GET" class="flex flex-wrap items-center gap-2">
-            <div class="relative">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Tìm danh mục..." class="input-admin pl-9 pr-3 py-2 text-sm border border-border-light rounded-lg w-52 transition-all" />
+        <form method="GET" class="flex flex-wrap items-center gap-2.5">
+            <div class="w-56">
+                <x-admin.form.input
+                    name="search"
+                    :value="$filters['search'] ?? ''"
+                    placeholder="Tìm danh mục..."
+                    icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>'
+                />
             </div>
-            <select name="status" class="input-admin border border-border-light rounded-lg px-3 py-2 text-sm cursor-pointer" onchange="this.form.submit()">
-                <option value="">Tất cả trạng thái</option>
-                <option value="active" @selected(($filters['status'] ?? '') === 'active')>Active</option>
-                <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>Inactive</option>
-            </select>
-            <button type="submit" class="px-3 py-2 text-sm bg-gray-100 text-text-primary rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">Lọc</button>
+            <div class="w-44">
+                <x-admin.form.select
+                    name="status"
+                    :value="$filters['status'] ?? ''"
+                    placeholder="Tất cả trạng thái"
+                    :options="[
+                        ['value' => '', 'label' => 'Tất cả trạng thái'],
+                        ['value' => 'active', 'label' => 'Active — Hiển thị', 'dot' => 'bg-emerald-500'],
+                        ['value' => 'inactive', 'label' => 'Inactive — Ẩn', 'dot' => 'bg-gray-400'],
+                    ]"
+                    :auto-submit="true"
+                />
+            </div>
+            <button type="submit" class="px-3.5 py-2.5 text-sm font-medium bg-gray-100 hover:bg-gray-200 text-text-primary rounded-xl transition-colors cursor-pointer shadow-2xs">Lọc</button>
+            @if(!empty($filters['search']) || !empty($filters['status']))
+                <a href="{{ route('admin.categories.index') }}" class="px-3 py-2.5 text-xs text-text-secondary hover:text-red-600 transition-colors">Xóa lọc</a>
+            @endif
         </form>
         <a href="{{ route('admin.categories.create') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>

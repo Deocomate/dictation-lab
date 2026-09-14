@@ -67,34 +67,17 @@
             Thông tin cơ bản
         </legend>
 
-        <div>
-            <label for="title" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Tiêu đề bài viết <span class="text-red-500">*</span></label>
-            <input id="title" name="title" value="{{ old('title', $article?->title) }}" placeholder="VD: Từ vựng chủ đề Công nghệ thông tin" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all" required />
-            @error('title')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-        </div>
+        <x-admin.form.field label="Tiêu đề bài viết" for="title" required :error="$errors->first('title')">
+            <x-admin.form.input id="title" name="title" :value="old('title', $article?->title)" placeholder="VD: Từ vựng chủ đề Công nghệ thông tin" required />
+        </x-admin.form.field>
 
-        <div>
-            <span class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Danh mục <span class="text-red-500">*</span></span>
-            <fieldset class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                @foreach($categories as $cat)
-                    <label class="flex items-center gap-2.5 p-3 rounded-lg border border-border-light hover:bg-gray-50 cursor-pointer">
-                        <input type="checkbox" name="category_ids[]" value="{{ $cat->id }}"
-                            data-category-slug="{{ $cat->slug }}"
-                            data-category-name="{{ $cat->name }}"
-                            @checked(in_array($cat->id, $selectedCategoryIds)) />
-                        <span class="text-sm font-medium">{{ $cat->name }}</span>
-                    </label>
-                @endforeach
-            </fieldset>
-            @error('category_ids')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-            @error('category_ids.*')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-        </div>
+        <x-admin.form.field label="Danh mục bài viết" required hint="(chọn một hoặc nhiều danh mục)" :error="$errors->first('category_ids') ?? $errors->first('category_ids.*')">
+            <x-admin.form.category-select :categories="$categories" :selected-ids="$selectedCategoryIds" />
+        </x-admin.form.field>
 
-        <div>
-            <label for="excerpt" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Tóm tắt <span class="font-normal text-text-disabled">(tùy chọn)</span></label>
-            <textarea id="excerpt" name="excerpt" rows="2" placeholder="Mô tả ngắn để hiển thị trên thẻ bài viết..." class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all leading-relaxed">{{ old('excerpt', $article?->excerpt) }}</textarea>
-            @error('excerpt')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
-        </div>
+        <x-admin.form.field label="Tóm tắt" for="excerpt" hint="(tùy chọn — hiển thị trên thẻ bài viết)" :error="$errors->first('excerpt')">
+            <x-admin.form.textarea id="excerpt" name="excerpt" :value="old('excerpt', $article?->excerpt)" rows="2" placeholder="Mô tả ngắn gọn về nội dung bài viết..." />
+        </x-admin.form.field>
     </fieldset>
 
     <hr class="border-border-light" />
@@ -109,7 +92,7 @@
         <div x-data="imageUpload()" x-init="init()">
             @if($article?->image_path)
                 <div x-show="!removed && !newPreview" class="mb-3 relative inline-block group">
-                    <img src="{{ Storage::disk('public')->url($article->image_path) }}" alt="Ảnh bìa" class="max-h-40 rounded-lg border border-border-light shadow-sm" />
+                    <img src="{{ $article->imageUrl() }}" alt="Ảnh bìa" class="max-h-40 rounded-lg border border-border-light shadow-sm" />
                     <button type="button" @click="removeExisting()" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors cursor-pointer opacity-0 group-hover:opacity-100">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -449,15 +432,23 @@ Chủ đề bài viết: [MO TA CHU DE CUA BAN TAI DAY — VD: "Du lich Da Nang,
                             document.getElementById('excerpt').value = (data.excerpt ?? '').trim();
 
                             if (data.status === 'published' || data.status === 'draft') {
-                                document.getElementById('status').value = data.status;
+                                const statusEl = document.getElementById('status');
+                                if (statusEl) {
+                                    statusEl.value = data.status;
+                                    statusEl.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
                             }
                             if (data.is_premium !== undefined) {
-                                document.getElementById('is_premium').value = data.is_premium ? '1' : '0';
+                                const premEl = document.getElementById('is_premium');
+                                if (premEl) {
+                                    premEl.value = data.is_premium ? '1' : '0';
+                                    premEl.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
                             }
 
                             const slugs = data.category_slugs ?? data.categories ?? [];
                             if (slugs.length > 0) {
-                                this.matchCategories(slugs);
+                                window.dispatchEvent(new CustomEvent('article-categories-match', { detail: { slugs } }));
                             }
 
                             window.dispatchEvent(new CustomEvent('article-blocks-import', { detail: { blocks } }));
@@ -486,20 +477,31 @@ Chủ đề bài viết: [MO TA CHU DE CUA BAN TAI DAY — VD: "Du lich Da Nang,
         </legend>
 
         <div class="grid md:grid-cols-2 gap-4">
-            <div>
-                <label for="is_premium" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Phân loại truy cập</label>
-                <select id="is_premium" name="is_premium" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm cursor-pointer transition-all" required>
-                    <option value="0" @selected((string) old('is_premium', (int) ($article?->is_premium ?? 0)) === '0')>Free — Miễn phí</option>
-                    <option value="1" @selected((string) old('is_premium', (int) ($article?->is_premium ?? 0)) === '1')>Pro — Trả phí</option>
-                </select>
-            </div>
-            <div>
-                <label for="status" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Trạng thái</label>
-                <select id="status" name="status" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm cursor-pointer transition-all" required>
-                    <option value="draft" @selected(old('status', $article?->status ?? 'draft') === 'draft')>Draft — Bản nháp</option>
-                    <option value="published" @selected(old('status', $article?->status) === 'published')>Published — Đã xuất bản</option>
-                </select>
-            </div>
+            <x-admin.form.field label="Phân loại truy cập" for="is_premium" required :error="$errors->first('is_premium')">
+                <x-admin.form.select
+                    id="is_premium"
+                    name="is_premium"
+                    :value="(string) old('is_premium', (int) ($article?->is_premium ?? 0))"
+                    :options="[
+                        ['value' => '0', 'label' => 'Free — Miễn phí', 'badge' => 'Free'],
+                        ['value' => '1', 'label' => 'Pro — Trả phí', 'badge' => 'Pro'],
+                    ]"
+                    required
+                />
+            </x-admin.form.field>
+
+            <x-admin.form.field label="Trạng thái xuất bản" for="status" required :error="$errors->first('status')">
+                <x-admin.form.select
+                    id="status"
+                    name="status"
+                    :value="old('status', $article?->status ?? 'draft')"
+                    :options="[
+                        ['value' => 'draft', 'label' => 'Draft — Bản nháp', 'dot' => 'bg-amber-500'],
+                        ['value' => 'published', 'label' => 'Published — Đã xuất bản', 'dot' => 'bg-emerald-500'],
+                    ]"
+                    required
+                />
+            </x-admin.form.field>
         </div>
     </fieldset>
 

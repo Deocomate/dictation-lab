@@ -58,12 +58,19 @@
 									<form method="POST" action="{{ route('admin.transactions.update-status', $transaction) }}" class="flex gap-1.5">
 										@csrf
 										@method('PUT')
-										<select name="status" class="input-admin border border-border-light rounded-lg px-2.5 py-1.5 text-xs transition-all">
-											<option value="pending" @selected($transaction->status === 'pending')>Pending</option>
-											<option value="success" @selected($transaction->status === 'success')>Success</option>
-											<option value="failed" @selected($transaction->status === 'failed')>Failed</option>
-										</select>
-										<button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
+										<div class="w-28">
+											<x-admin.form.select
+												name="status"
+												:value="$transaction->status"
+												size="sm"
+												:options="[
+													['value' => 'pending', 'label' => 'Pending', 'dot' => 'bg-amber-500'],
+													['value' => 'success', 'label' => 'Success', 'dot' => 'bg-emerald-500'],
+													['value' => 'failed', 'label' => 'Failed', 'dot' => 'bg-red-500'],
+												]"
+											/>
+										</div>
+										<button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-semibold hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
 											<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
 											Lưu
 										</button>

@@ -39,13 +39,13 @@
     ];
 
     $textSizes = [
-        'md' => 'text-base sm:text-[1.125rem]',
+        'md' => 'text-base',
         'lg' => 'text-2xl sm:text-3xl',
     ];
 
     $dotSizes = [
-        'md' => 'w-1.5 h-1.5 ml-1',
-        'lg' => 'w-2 h-2 ml-1.5',
+        'md' => 'w-1.5 h-1.5 ml-1.5',
+        'lg' => 'w-2 h-2 ml-2',
     ];
 
     $badgeSizes = [
@@ -98,17 +98,17 @@
     </div>
 
     {{-- Typographic Wordmark & Admin Tag --}}
-    <div class="flex items-baseline {{ $selectedTextSize }} font-brand leading-none">
-        <span class="font-extrabold tracking-[-0.035em] {{ $dictationColor }} transition-colors">
+    <div class="flex items-center shrink-0 {{ $selectedTextSize }} font-brand leading-none">
+        <span class="font-extrabold tracking-[-0.03em] {{ $dictationColor }} transition-colors">
             Dictation
         </span>
-        <span class="font-bold tracking-[-0.02em] {{ $labColor }} ml-0.5">
+        <span class="font-bold tracking-[-0.01em] {{ $labColor }} ml-1">
             Lab
         </span>
-        <span class="inline-block {{ $selectedDotSize }} rounded-full {{ $dotColor }} animate-pulse" aria-hidden="true"></span>
+        <span class="inline-block {{ $selectedDotSize }} rounded-full {{ $dotColor }} animate-pulse shrink-0" aria-hidden="true"></span>
 
         @if ($showBadge)
-            <span class="inline-flex items-center font-mono font-bold uppercase tracking-wider border rounded {{ $badgeClasses }} {{ $selectedBadgeSize }}">
+            <span class="inline-flex items-center font-mono font-bold uppercase tracking-wider border rounded {{ $badgeClasses }} {{ $selectedBadgeSize }} shrink-0">
                 {{ $badgeText }}
             </span>
         @endif

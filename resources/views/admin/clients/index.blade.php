@@ -6,25 +6,47 @@
 
 	{{-- Filter bar --}}
 	<form method="GET" class="mb-5 bg-white border border-border-light rounded-xl p-4 shadow-card">
-		<div class="grid md:grid-cols-4 gap-3">
-			<div class="relative">
-				<svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-disabled" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-				<input name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Tìm theo tên/email" class="input-admin w-full border border-border-light rounded-lg pl-9 pr-3.5 py-2.5 text-sm transition-all" />
+		<div class="grid md:grid-cols-4 gap-3 items-center">
+			<x-admin.form.input
+				name="search"
+				:value="$filters['search'] ?? ''"
+				placeholder="Tìm theo tên hoặc email..."
+				icon='<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>'
+			/>
+
+			<x-admin.form.select
+				name="subscription_tier"
+				:value="$filters['subscription_tier'] ?? ''"
+				placeholder="Tất cả gói cước"
+				:options="[
+					['value' => '', 'label' => 'Tất cả gói cước'],
+					['value' => 'free', 'label' => 'Free — Miễn phí', 'badge' => 'Free'],
+					['value' => 'pro', 'label' => 'Pro — Trả phí', 'badge' => 'Pro'],
+				]"
+				:auto-submit="true"
+			/>
+
+			<x-admin.form.select
+				name="status"
+				:value="$filters['status'] ?? ''"
+				placeholder="Tất cả trạng thái"
+				:options="[
+					['value' => '', 'label' => 'Tất cả trạng thái'],
+					['value' => 'active', 'label' => 'Active — Hoạt động', 'dot' => 'bg-emerald-500'],
+					['value' => 'locked', 'label' => 'Locked — Bị khóa', 'dot' => 'bg-red-500'],
+				]"
+				:auto-submit="true"
+			/>
+
+			<div class="flex items-center gap-2">
+				<button type="submit" class="flex-1 inline-flex items-center justify-center gap-1.5 bg-brand text-white rounded-xl px-4 py-2.5 text-sm font-semibold hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+					Lọc
+				</button>
+				@if(!empty($filters['search']) || !empty($filters['subscription_tier']) || !empty($filters['status']))
+					<a href="{{ route('admin.clients.index') }}" class="px-3 py-2.5 text-xs text-text-secondary hover:text-red-600 transition-colors">Xóa lọc</a>
+				@endif
 			</div>
-			<select name="subscription_tier" class="input-admin border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all">
-				<option value="">Tất cả gói</option>
-				<option value="free" @selected(($filters['subscription_tier'] ?? '') === 'free')>Free</option>
-				<option value="pro" @selected(($filters['subscription_tier'] ?? '') === 'pro')>Pro</option>
-			</select>
-			<select name="status" class="input-admin border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all">
-				<option value="">Tất cả trạng thái</option>
-				<option value="active" @selected(($filters['status'] ?? '') === 'active')>Active</option>
-				<option value="locked" @selected(($filters['status'] ?? '') === 'locked')>Locked</option>
-			</select>
-			<button type="submit" class="inline-flex items-center justify-center gap-1.5 bg-brand text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-				Lọc
-			</button>
 		</div>
 	</form>
 

@@ -10,22 +10,21 @@
 		<form method="POST" action="{{ route('admin.users.update', $user) }}" class="space-y-5">
 			@csrf
 			@method('PUT')
-			<div>
-				<label for="name" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Họ tên</label>
-				<input id="name" name="name" value="{{ old('name', $user->name) }}" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all" required />
-			</div>
-			<div>
-				<label for="email" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Email</label>
-				<input id="email" name="email" type="email" value="{{ old('email', $user->email) }}" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all" required />
-			</div>
-			<div>
-				<label for="password" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Mật khẩu mới <span class="font-normal text-text-disabled">(không bắt buộc)</span></label>
-				<input id="password" name="password" type="password" placeholder="Để trống nếu không đổi" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all" />
-			</div>
-			<div>
-				<label for="password_confirmation" class="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-1.5">Xác nhận mật khẩu mới</label>
-				<input id="password_confirmation" name="password_confirmation" type="password" placeholder="Nhập lại mật khẩu mới" class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm transition-all" />
-			</div>
+			<x-admin.form.field label="Họ tên" for="name" required :error="$errors->first('name')">
+				<x-admin.form.input id="name" name="name" :value="old('name', $user->name)" placeholder="Nguyễn Văn A" required />
+			</x-admin.form.field>
+
+			<x-admin.form.field label="Email" for="email" required :error="$errors->first('email')">
+				<x-admin.form.input id="email" name="email" type="email" :value="old('email', $user->email)" placeholder="admin@ieltstl.vn" required />
+			</x-admin.form.field>
+
+			<x-admin.form.field label="Mật khẩu mới" for="password" hint="(không bắt buộc)" :error="$errors->first('password')">
+				<x-admin.form.input id="password" name="password" type="password" placeholder="Để trống nếu không đổi" />
+			</x-admin.form.field>
+
+			<x-admin.form.field label="Xác nhận mật khẩu mới" for="password_confirmation" :error="$errors->first('password_confirmation')">
+				<x-admin.form.input id="password_confirmation" name="password_confirmation" type="password" placeholder="Nhập lại mật khẩu mới" />
+			</x-admin.form.field>
 			<div class="flex items-center gap-3 pt-2 border-t border-border-light">
 				<button type="submit" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand text-white text-sm font-medium rounded-lg hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>

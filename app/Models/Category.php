@@ -18,4 +18,9 @@ class Category extends Model
     {
         return $this->belongsToMany(Article::class);
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
 }

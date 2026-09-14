@@ -23,61 +23,52 @@
 					</label>
 				</div>
 
-				<div>
-					<label for="welcome_message" class="block text-sm font-semibold text-text-primary mb-1.5">Tin nhắn chào mặc định</label>
-					<input
+				<x-admin.form.field label="Tin nhắn chào mặc định" for="welcome_message">
+					<x-admin.form.input
 						id="welcome_message"
-						type="text"
 						name="welcome_message"
-						value="{{ old('welcome_message', $setting->welcome_message) }}"
-						class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm"
+						:value="old('welcome_message', $setting->welcome_message)"
 						placeholder="Xin chào, mình có thể giúp bạn điều gì?"
 					/>
-				</div>
+				</x-admin.form.field>
 
 				<div class="grid sm:grid-cols-2 gap-4">
-					<div>
-						<label for="max_questions" class="block text-sm font-semibold text-text-primary mb-1.5">Số câu hỏi tối đa / conversation</label>
-						<input
+					<x-admin.form.field label="Số câu hỏi tối đa / conversation" for="max_questions" hint="Bắt buộc <= 5">
+						<x-admin.form.input
 							id="max_questions"
 							type="number"
 							name="max_questions"
 							min="1"
 							max="5"
-							value="{{ old('max_questions', $setting->max_questions) }}"
-							class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm"
+							:value="old('max_questions', $setting->max_questions)"
 						/>
-						<p class="text-xs text-text-secondary mt-1">Bắt buộc <= 5 để tránh vượt chi phí token.</p>
-					</div>
-					<div>
-						<label for="max_input_chars" class="block text-sm font-semibold text-text-primary mb-1.5">Giới hạn độ dài câu hỏi (ký tự)</label>
-						<input
+					</x-admin.form.field>
+
+					<x-admin.form.field label="Giới hạn độ dài câu hỏi (ký tự)" for="max_input_chars" hint="Nên để 300-600">
+						<x-admin.form.input
 							id="max_input_chars"
 							type="number"
 							name="max_input_chars"
 							min="100"
 							max="1200"
-							value="{{ old('max_input_chars', $setting->max_input_chars) }}"
-							class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm"
+							:value="old('max_input_chars', $setting->max_input_chars)"
 						/>
-						<p class="text-xs text-text-secondary mt-1">Nên để 300-600 để tối ưu token mỗi lần hỏi.</p>
-					</div>
+					</x-admin.form.field>
 				</div>
 
-				<div>
-					<label for="system_instruction" class="block text-sm font-semibold text-text-primary mb-1.5">System instruction</label>
-					<textarea
+				<x-admin.form.field label="System instruction" for="system_instruction" hint="Nạp cố định trước khi AI chat">
+					<x-admin.form.textarea
 						id="system_instruction"
 						name="system_instruction"
-						rows="12"
-						class="input-admin w-full border border-border-light rounded-lg px-3.5 py-2.5 text-sm leading-6 font-mono"
+						rows="10"
+						class="font-mono text-xs"
+						:value="old('system_instruction', $setting->system_instruction)"
 						placeholder="Nhập bộ hướng dẫn cố định mà AI phải tuân thủ..."
-					>{{ old('system_instruction', $setting->system_instruction) }}</textarea>
-					<p class="text-xs text-text-secondary mt-1">Tất cả câu trả lời AI cho user sẽ luôn nạp instruction này trước khi chat.</p>
-				</div>
+					/>
+				</x-admin.form.field>
 
-				<div class="flex items-center justify-end gap-2">
-					<button type="submit" class="inline-flex items-center gap-1.5 bg-brand text-white rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-brand-dark transition-colors cursor-pointer">
+				<div class="flex items-center justify-end gap-2 pt-2 border-t border-border-light">
+					<button type="submit" class="inline-flex items-center gap-1.5 bg-brand text-white rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-brand-dark transition-colors cursor-pointer shadow-sm">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
 						Lưu cấu hình AI
 					</button>

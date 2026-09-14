@@ -20,7 +20,7 @@
 	class="fixed inset-y-0 left-0 z-50 flex w-60 flex-col bg-slate-900 text-slate-300 transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:z-auto">
 
 	{{-- Logo --}}
-	<div class="px-4 py-4.5 border-b border-slate-700/60 flex items-center">
+	<div class="h-16 px-4 border-b border-slate-700/60 flex items-center">
 		<x-admin.layout.brand-logo theme="dark" size="md" />
 	</div>
 
