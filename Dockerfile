@@ -2,13 +2,18 @@
 # Single container: Apache + mod_php serving public/. Built for Coolify:
 # the app never publishes a host port (see docker-compose.yml `expose:`),
 # Coolify's Traefik proxy reaches it over the internal network instead.
-FROM php:8.2-apache
+FROM php:8.2-apache-bookworm
+
+# Fix IPv6 stall & network timeout on Debian mirrors during build
+RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99network \
+    && echo 'Acquire::http::Timeout "30";' >> /etc/apt/apt.conf.d/99network \
+    && echo 'Acquire::Retries "3";' >> /etc/apt/apt.conf.d/99network
+
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libicu-dev libonig-dev \
         unzip git \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring exif pcntl bcmath gd zip intl \
+    && install-php-extensions pdo_mysql mbstring exif pcntl bcmath gd zip intl \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
