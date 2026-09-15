@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AiAssistantController;
 use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\GeneralSettingController;
@@ -107,6 +108,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
             Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
             Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+            Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
+            Route::post('backups/export', [BackupController::class, 'export'])->name('backups.export');
+            Route::post('backups/import', [BackupController::class, 'import'])->name('backups.import');
+            Route::get('backups/download/{filename}', [BackupController::class, 'download'])->name('backups.download');
+            Route::delete('backups/{filename}', [BackupController::class, 'destroy'])->name('backups.destroy');
         });
 
         Route::middleware('role:superadmin,admin')->group(function () {

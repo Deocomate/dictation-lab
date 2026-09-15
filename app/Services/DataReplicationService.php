@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Helpers\FormatHelper;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
@@ -43,7 +45,7 @@ class DataReplicationService
                 'image_count' => $imageCount,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
-            $outputPath ??= config('replica.export_path').'/replica-'.now()->format('Ymd-His').'.zip';
+            $outputPath ??= config('replica.export_path').'/database_'.now()->format('Y-m-d_H-i-s').'.zip';
             File::ensureDirectoryExists(dirname($outputPath));
 
             $this->zipDirectory($workDir, $outputPath);
@@ -58,7 +60,7 @@ class DataReplicationService
      * Merge a replica archive (or an already-extracted directory) into the
      * current database + images disk. Returns a summary of what changed.
      *
-     * @return array{backup_path: ?string, tables: array<string,int>, images: int}
+     * @return array{backup_path: ?string, tables: array<string,int>, images: int, manifest: ?array<string,mixed>}
      */
     public function import(string $archivePath, bool $skipBackup = false): array
     {
@@ -70,7 +72,7 @@ class DataReplicationService
         if (! $skipBackup) {
             File::ensureDirectoryExists(config('replica.backup_path'));
             $backupPath = $this->export(
-                config('replica.backup_path').'/pre-import-'.now()->format('Ymd-His').'.zip'
+                config('replica.backup_path').'/pre-import-'.now()->format('Y-m-d_H-i-s').'.zip'
             );
         }
 
@@ -78,6 +80,9 @@ class DataReplicationService
         $isTempExtraction = $extractedDir !== $archivePath;
 
         try {
+            $manifestPath = $extractedDir.'/manifest.json';
+            $manifest = File::exists($manifestPath) ? json_decode(File::get($manifestPath), true) : null;
+
             $tableCounts = $this->importTables($extractedDir.'/db');
             $imageCount = $this->copyDirectoryContents($extractedDir.'/images', $this->imagesRoot());
 
@@ -85,12 +90,156 @@ class DataReplicationService
                 'backup_path' => $backupPath,
                 'tables' => $tableCounts,
                 'images' => $imageCount,
+                'manifest' => $manifest,
             ];
         } finally {
             if ($isTempExtraction) {
                 File::deleteDirectory($extractedDir);
             }
         }
+    }
+
+    /**
+     * @return array{table_count: int, image_count: int}
+     */
+    public function getStats(): array
+    {
+        $excluded = config('replica.excluded_tables', []);
+        $tables = array_filter(
+            Schema::getTables(),
+            fn ($t) => ! in_array($t['name'], $excluded, true)
+        );
+
+        $imageCount = 0;
+        $imagesRoot = $this->imagesRoot();
+        if (is_dir($imagesRoot)) {
+            $imageCount = count(File::allFiles($imagesRoot));
+        }
+
+        return [
+            'table_count' => count($tables),
+            'image_count' => $imageCount,
+        ];
+    }
+
+    /**
+     * @return array<int, array{filename: string, path: string, size: int, size_formatted: string, created_at: int, type: string}>
+     */
+    public function getRecentBackups(): array
+    {
+        $directories = [
+            'backup' => config('replica.backup_path'),
+            'export' => config('replica.export_path'),
+        ];
+
+        $files = [];
+
+        foreach ($directories as $type => $dir) {
+            if (! is_dir($dir)) {
+                continue;
+            }
+
+            foreach (File::files($dir) as $file) {
+                if ($file->getExtension() !== 'zip') {
+                    continue;
+                }
+
+                $size = $file->getSize();
+                $modified = $file->getMTime();
+
+                $files[] = [
+                    'filename' => $file->getFilename(),
+                    'path' => $file->getPathname(),
+                    'size' => $size,
+                    'size_formatted' => FormatHelper::fileSize($size),
+                    'created_at' => $modified,
+                    'type' => $type,
+                ];
+            }
+        }
+
+        usort($files, fn ($a, $b) => $b['created_at'] <=> $a['created_at']);
+
+        return array_slice($files, 0, 20);
+    }
+
+    public function findBackupFile(string $filename): ?string
+    {
+        if (basename($filename) !== $filename || ! str_ends_with(strtolower($filename), '.zip')) {
+            return null;
+        }
+
+        $candidates = [
+            config('replica.backup_path').DIRECTORY_SEPARATOR.$filename,
+            config('replica.export_path').DIRECTORY_SEPARATOR.$filename,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (File::exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    public function deleteBackupFile(string $filename): bool
+    {
+        $path = $this->findBackupFile($filename);
+        if (! $path) {
+            return false;
+        }
+
+        return File::delete($path);
+    }
+
+    public function extractTimeFromFilename(string $filename): ?string
+    {
+        // Pattern 1: YYYY-MM-DD_H-i-s or YYYY-MM-DD_His
+        if (preg_match('/(\d{4})-(\d{2})-(\d{2})[_T-](\d{2})[-:]?(\d{2})[-:]?(\d{2})?/', $filename, $m)) {
+            $sec = $m[6] ?? '00';
+
+            return "{$m[4]}:{$m[5]}:{$sec} ngày {$m[3]}/{$m[2]}/{$m[1]}";
+        }
+
+        // Pattern 2: YYYYMMDD-HHmmss or YYYYMMDD_HHmmss
+        if (preg_match('/(\d{4})(\d{2})(\d{2})[-_](\d{2})(\d{2})(\d{2})/', $filename, $m)) {
+            return "{$m[4]}:{$m[5]}:{$m[6]} ngày {$m[3]}/{$m[2]}/{$m[1]}";
+        }
+
+        // Pattern 3: DD-MM-YYYY_H-i-s
+        if (preg_match('/(\d{2})-(\d{2})-(\d{4})[_T-](\d{2})[-:]?(\d{2})[-:]?(\d{2})?/', $filename, $m)) {
+            $sec = $m[6] ?? '00';
+
+            return "{$m[4]}:{$m[5]}:{$sec} ngày {$m[1]}/{$m[2]}/{$m[3]}";
+        }
+
+        return null;
+    }
+
+    /**
+     * Inspect a zip file to determine its export timestamp without full extraction.
+     */
+    public function getArchiveExportTime(string $archivePath): ?string
+    {
+        if (! File::exists($archivePath)) {
+            return null;
+        }
+
+        $zip = new ZipArchive;
+        if ($zip->open($archivePath) === true) {
+            $manifestJson = $zip->getFromName('manifest.json');
+            $zip->close();
+
+            if ($manifestJson) {
+                $data = json_decode($manifestJson, true);
+                if (! empty($data['exported_at'])) {
+                    return Carbon::parse($data['exported_at'])->format('H:i:s \n\gà\y d/m/Y');
+                }
+            }
+        }
+
+        return $this->extractTimeFromFilename(basename($archivePath));
     }
 
     /**
