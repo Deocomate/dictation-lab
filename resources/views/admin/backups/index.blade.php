@@ -1,12 +1,61 @@
 <x-admin.layout.app title="Sao lưu & Phục hồi dữ liệu" active="backups">
 	<div class="w-full max-w-full space-y-6" x-data="{
 		isExporting: false,
+		exportSuccess: false,
 		isImporting: false,
 		selectedFile: null,
 		selectedFileSize: '',
 		extractedTime: null,
 		autoBackup: true,
 		confirmModalOpen: false,
+		async exportDatabase() {
+			if (this.isExporting) return;
+			this.isExporting = true;
+			this.exportSuccess = false;
+			try {
+				const response = await fetch('{{ route('admin.backups.export') }}', {
+					method: 'POST',
+					headers: {
+						'X-CSRF-TOKEN': '{{ csrf_token() }}',
+						'X-Requested-With': 'XMLHttpRequest'
+					}
+				});
+
+				if (!response.ok) {
+					throw new Error('Máy chủ phản hồi mã lỗi: ' + response.status);
+				}
+
+				const disposition = response.headers.get('Content-Disposition');
+				let filename = 'database.zip';
+				if (disposition && disposition.indexOf('filename=') !== -1) {
+					const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+					if (matches && matches[1]) {
+						filename = matches[1].replace(/['"]/g, '');
+					}
+				}
+
+				const blob = await response.blob();
+				const downloadUrl = window.URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = downloadUrl;
+				link.download = filename;
+				document.body.appendChild(link);
+				link.click();
+				window.URL.revokeObjectURL(downloadUrl);
+				link.remove();
+
+				this.isExporting = false;
+				this.exportSuccess = true;
+				setTimeout(() => {
+					this.exportSuccess = false;
+					window.location.reload();
+				}, 1500);
+			} catch (err) {
+				alert('Có lỗi xảy ra khi xuất dữ liệu: ' + err.message);
+				this.isExporting = false;
+				this.exportSuccess = false;
+			}
+		},
 		extractExportTime(filename) {
 			if (!filename) return null;
 			let m = filename.match(/(\d{4})-(\d{2})-(\d{2})[_T-](\d{2})[-:]?(\d{2})[-:]?(\d{2})?/);
@@ -113,24 +162,28 @@
 				</div>
 
 				<div class="mt-6 pt-5 border-t border-border-light">
-					<form method="POST" action="{{ route('admin.backups.export') }}" @submit="isExporting = true">
-						@csrf
-						<button type="submit" :disabled="isExporting"
-							class="w-full inline-flex items-center justify-center gap-2 bg-brand text-white rounded-lg px-4 py-2.5 text-sm font-semibold hover:bg-brand-dark transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
-							<template x-if="!isExporting">
-								<span class="inline-flex items-center gap-2">
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-									Tải về tệp sao lưu (.zip)
-								</span>
-							</template>
-							<template x-if="isExporting">
-								<span class="inline-flex items-center gap-2">
-									<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-									Đang nén dữ liệu & chuẩn bị tải về...
-								</span>
-							</template>
-						</button>
-					</form>
+					<button type="button" @click="exportDatabase()" :disabled="isExporting"
+						:class="exportSuccess ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-brand hover:bg-brand-dark'"
+						class="w-full inline-flex items-center justify-center gap-2 text-white rounded-lg px-4 py-2.5 text-sm font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+						<template x-if="!isExporting && !exportSuccess">
+							<span class="inline-flex items-center gap-2">
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+								Tải về tệp sao lưu (.zip)
+							</span>
+						</template>
+						<template x-if="isExporting">
+							<span class="inline-flex items-center gap-2">
+								<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+								Đang nén dữ liệu & chuẩn bị tải về...
+							</span>
+						</template>
+						<template x-if="exportSuccess">
+							<span class="inline-flex items-center gap-2">
+								<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+								Đã xuất và tải về thành công!
+							</span>
+						</template>
+					</button>
 				</div>
 			</div>
 
