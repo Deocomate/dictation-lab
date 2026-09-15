@@ -1,97 +1,5 @@
 <x-admin.layout.app title="Sao lưu & Phục hồi dữ liệu" active="backups">
-	<div class="w-full max-w-full space-y-6" x-data="{
-		isExporting: false,
-		exportSuccess: false,
-		isImporting: false,
-		selectedFile: null,
-		selectedFileSize: '',
-		extractedTime: null,
-		autoBackup: true,
-		confirmModalOpen: false,
-		async exportDatabase() {
-			if (this.isExporting) return;
-			this.isExporting = true;
-			this.exportSuccess = false;
-			try {
-				const response = await fetch('{{ route('admin.backups.export') }}', {
-					method: 'POST',
-					headers: {
-						'X-CSRF-TOKEN': '{{ csrf_token() }}',
-						'X-Requested-With': 'XMLHttpRequest'
-					}
-				});
-
-				if (!response.ok) {
-					throw new Error('Máy chủ phản hồi mã lỗi: ' + response.status);
-				}
-
-				const disposition = response.headers.get('Content-Disposition');
-				let filename = 'database.zip';
-				if (disposition && disposition.indexOf('filename=') !== -1) {
-					const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
-					if (matches && matches[1]) {
-						filename = matches[1].replace(/['"]/g, '');
-					}
-				}
-
-				const blob = await response.blob();
-				const downloadUrl = window.URL.createObjectURL(blob);
-				const link = document.createElement('a');
-				link.href = downloadUrl;
-				link.download = filename;
-				document.body.appendChild(link);
-				link.click();
-				window.URL.revokeObjectURL(downloadUrl);
-				link.remove();
-
-				this.isExporting = false;
-				this.exportSuccess = true;
-				setTimeout(() => {
-					this.exportSuccess = false;
-					window.location.reload();
-				}, 1500);
-			} catch (err) {
-				alert('Có lỗi xảy ra khi xuất dữ liệu: ' + err.message);
-				this.isExporting = false;
-				this.exportSuccess = false;
-			}
-		},
-		extractExportTime(filename) {
-			if (!filename) return null;
-			let m = filename.match(/(\d{4})-(\d{2})-(\d{2})[_T-](\d{2})[-:]?(\d{2})[-:]?(\d{2})?/);
-			if (m) {
-				return `${m[4]}:${m[5]}:${m[6] || '00'} ngày ${m[3]}/${m[2]}/${m[1]}`;
-			}
-			m = filename.match(/(\d{4})(\d{2})(\d{2})[-_](\d{2})(\d{2})(\d{2})/);
-			if (m) {
-				return `${m[4]}:${m[5]}:${m[6]} ngày ${m[3]}/${m[2]}/${m[1]}`;
-			}
-			m = filename.match(/(\d{2})-(\d{2})-(\d{4})[_T-](\d{2})[-:]?(\d{2})[-:]?(\d{2})?/);
-			if (m) {
-				return `${m[4]}:${m[5]}:${m[6] || '00'} ngày ${m[1]}/${m[2]}/${m[3]}`;
-			}
-			return null;
-		},
-		handleFileSelect(e) {
-			const files = e.target.files || e.dataTransfer.files;
-			if (!files.length) return;
-			const file = files[0];
-			if (!file.name.toLowerCase().endsWith('.zip')) {
-				alert('Vui lòng chỉ chọn tệp định dạng .zip');
-				return;
-			}
-			this.selectedFile = file.name;
-			this.selectedFileSize = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-			this.extractedTime = this.extractExportTime(file.name);
-		},
-		clearFile() {
-			this.selectedFile = null;
-			this.selectedFileSize = '';
-			this.extractedTime = null;
-			const input = document.getElementById('backup_file_input');
-			if (input) input.value = '';
-		}
-	}">
+	<div class="w-full max-w-full space-y-6" x-data="backupManager()">
 
 		{{-- Stats banner --}}
 		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -441,4 +349,106 @@
 		</div>
 
 	</div>
+
+	<script>
+		function backupManager() {
+			return {
+				isExporting: false,
+				exportSuccess: false,
+				isImporting: false,
+				selectedFile: null,
+				selectedFileSize: '',
+				extractedTime: null,
+				autoBackup: true,
+				confirmModalOpen: false,
+
+				async exportDatabase() {
+					if (this.isExporting) return;
+					this.isExporting = true;
+					this.exportSuccess = false;
+					try {
+						const response = await fetch('{{ route('admin.backups.export') }}', {
+							method: 'POST',
+							headers: {
+								'X-CSRF-TOKEN': '{{ csrf_token() }}',
+								'X-Requested-With': 'XMLHttpRequest'
+							}
+						});
+
+						if (!response.ok) {
+							throw new Error('Máy chủ phản hồi mã lỗi: ' + response.status);
+						}
+
+						const disposition = response.headers.get('Content-Disposition');
+						let filename = 'database.zip';
+						if (disposition && disposition.indexOf('filename=') !== -1) {
+							const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+							if (matches && matches[1]) {
+								filename = matches[1].replace(/['"]/g, '');
+							}
+						}
+
+						const blob = await response.blob();
+						const downloadUrl = window.URL.createObjectURL(blob);
+						const link = document.createElement('a');
+						link.href = downloadUrl;
+						link.download = filename;
+						document.body.appendChild(link);
+						link.click();
+						window.URL.revokeObjectURL(downloadUrl);
+						link.remove();
+
+						this.isExporting = false;
+						this.exportSuccess = true;
+						setTimeout(() => {
+							this.exportSuccess = false;
+							window.location.reload();
+						}, 1500);
+					} catch (err) {
+						alert('Có lỗi xảy ra khi xuất dữ liệu: ' + err.message);
+						this.isExporting = false;
+						this.exportSuccess = false;
+					}
+				},
+
+				extractExportTime(filename) {
+					if (!filename) return null;
+					let m = filename.match(/(\d{4})-(\d{2})-(\d{2})[_T-](\d{2})[-:]?(\d{2})[-:]?(\d{2})?/);
+					if (m) {
+						return `${m[4]}:${m[5]}:${m[6] || '00'} ngày ${m[3]}/${m[2]}/${m[1]}`;
+					}
+					m = filename.match(/(\d{4})(\d{2})(\d{2})[-_](\d{2})(\d{2})(\d{2})/);
+					if (m) {
+						return `${m[4]}:${m[5]}:${m[6]} ngày ${m[3]}/${m[2]}/${m[1]}`;
+					}
+					m = filename.match(/(\d{2})-(\d{2})-(\d{4})[_T-](\d{2})[-:]?(\d{2})[-:]?(\d{2})?/);
+					if (m) {
+						return `${m[4]}:${m[5]}:${m[6] || '00'} ngày ${m[1]}/${m[2]}/${m[3]}`;
+					}
+					return null;
+				},
+
+				handleFileSelect(e) {
+					const files = e.target.files || e.dataTransfer.files;
+					if (!files.length) return;
+					const file = files[0];
+					if (!file.name.toLowerCase().endsWith('.zip')) {
+						alert('Vui lòng chỉ chọn tệp định dạng .zip');
+						return;
+					}
+					this.selectedFile = file.name;
+					this.selectedFileSize = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+					this.extractedTime = this.extractExportTime(file.name);
+				},
+
+				clearFile() {
+					this.selectedFile = null;
+					this.selectedFileSize = '';
+					this.extractedTime = null;
+					const input = document.getElementById('backup_file_input');
+					if (input) input.value = '';
+				}
+			};
+		}
+	</script>
 </x-admin.layout.app>
